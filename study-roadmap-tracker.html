@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>study-roadmap-tracker</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --bg:#f7f6f2; --surface:#ffffff; --surface-2:#f1efe9; --text:#22201b; --muted:#6d6a63;
+      --primary:#01696f; --primary-2:#0c4e54; --success:#437a22; --warning:#b06a00; --danger:#a13544;
+      --border:#d9d5ce; --shadow:0 10px 30px rgba(0,0,0,.08); --radius:18px;
+    }
+    [data-theme="dark"] {
+      --bg:#171614; --surface:#1f1d1a; --surface-2:#292622; --text:#ece8df; --muted:#a9a49a;
+      --primary:#4f98a3; --primary-2:#76b7c0; --success:#7fb55d; --warning:#e0a83f; --danger:#dd6974;
+      --border:#3a352f; --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:'Satoshi', sans-serif; background:var(--bg); color:var(--text); line-height:1.5;
+    }
+    .wrap { max-width:1180px; margin:auto; padding:24px; }
+    .top {
+      display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:22px;
+      flex-wrap:wrap;
+    }
+    h1 { margin:0; font-size:clamp(1.8rem, 3vw, 3rem); }
+    .sub { color:var(--muted); margin-top:6px; }
+    .btn {
+      border:none; background:var(--primary); color:white; padding:12px 16px; border-radius:12px; cursor:pointer; font-weight:700;
+    }
+    .btn.secondary { background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+    .grid { display:grid; grid-template-columns: 1.2fr .8fr; gap:20px; }
+    .card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px;
+    }
+    .section-title { margin:0 0 14px; font-size:1.15rem; }
+    .small { color:var(--muted); font-size:.95rem; }
+    .progress-bar { height:12px; background:var(--surface-2); border-radius:999px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg, var(--primary), var(--primary-2)); }
+    .subject { display:grid; grid-template-columns: 110px 1fr 56px; gap:12px; align-items:center; margin:12px 0; }
+    .task {
+      display:grid; grid-template-columns: 24px 1fr auto; gap:12px; align-items:start; padding:12px; border:1px solid var(--border);
+      border-radius:14px; margin:10px 0; background:var(--surface);
+    }
+    .task.done { opacity:.68; }
+    .task.done .task-title { text-decoration:line-through; }
+    input[type="checkbox"] { width:20px; height:20px; margin-top:2px; }
+    .tag { font-size:.78rem; padding:4px 10px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); }
+    .tag.high { color:var(--danger); }
+    .tag.med { color:var(--warning); }
+    .tag.low { color:var(--success); }
+    .two { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .stat { padding:14px; border-radius:14px; background:var(--surface-2); border:1px solid var(--border); }
+    .stat strong { display:block; font-size:1.5rem; margin-top:4px; }
+    .routine li, .notes li { margin:10px 0; }
+    .footer-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:14px; }
+    textarea {
+      width:100%; min-height:110px; background:var(--surface-2); color:var(--text); border:1px solid var(--border);
+      border-radius:14px; padding:12px; font:inherit;
+    }
+    .pill { display:inline-block; padding:6px 12px; border-radius:999px; background:rgba(1,105,111,.12); color:var(--primary); font-weight:700; }
+    @media (max-width: 900px){ .grid, .two { grid-template-columns:1fr; } .subject { grid-template-columns: 88px 1fr 50px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="pill">2-week focused exam mode</div>
+        <h1>Study Roadmap Tracker</h1>
+        <div class="sub">Tick tasks, track progress, and stay honest with your daily plan.</div>
+      </div>
+      <button class="btn secondary" id="themeToggle">Toggle theme</button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2 class="section-title">Priority split</h2>
+          <div class="subject"><div><strong>Math</strong></div><div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div><div>20%</div></div>
+          <div class="subject"><div><strong>Chem</strong></div><div class="progress-bar"><div class="progress-fill" style="width:10%"></div></div><div>10%</div></div>
+          <div class="subject"><div><strong>Python</strong></div><div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div><div>80%</div></div>
+          <div class="subject"><div><strong>Web Dev</strong></div><div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div><div>60%</div></div>
+          <p class="small">Focus order for the next 14 days: Math and Chemistry first, then Python, then Web Dev maintenance, while keeping 1-2 hours for Google Cloud Arcade.</p>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h2 class="section-title">Daily checklist</h2>
+          <div id="tasks"></div>
+          <div class="footer-actions">
+            <button class="btn" id="resetDay">Reset all</button>
+            <button class="btn secondary" id="exportState">Export status</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 class="section-title">Today snapshot</h2>
+          <div class="two">
+            <div class="stat">Completion<strong id="doneCount">0/0</strong></div>
+            <div class="stat">Score<strong id="scorePct">0%</strong></div>
+          </div>
+          <ul class="routine">
+            <li><strong>2:30-4:30 pm</strong> — Math problem solving</li>
+            <li><strong>4:45-6:00 pm</strong> — Chemistry theory + short notes</li>
+            <li><strong>6:00-7:00 pm</strong> — Workout + snacks</li>
+            <li><strong>7:15-8:00 pm</strong> — Python revision / lab work</li>
+            <li><strong>8:00-8:30 pm</strong> — Dinner</li>
+            <li><strong>8:45-10:15 pm</strong> — Google Cloud Arcade</li>
+            <li><strong>10:30-11:30 pm</strong> — Math/Chem weak area revision</li>
+            <li><strong>11:30-12:15 am</strong> — CODM or light break</li>
+            <li><strong>12:15-1:15 am</strong> — Quick review + next-day planning</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h2 class="section-title">Rules for yourself</h2>
+          <ul class="notes">
+            <li>Do not start CODM before finishing the first 2 study blocks.</li>
+            <li>Treat Python and Web Dev as maintenance, not main battle, until mid-sems are over.</li>
+            <li>If college return is delayed, shift one block after dinner instead of skipping it.</li>
+            <li>Target sleep by 1:00 am this week, then 12:30 am next week.</li>
+            <li>Make one-page formula/reaction sheets for Math and Chemistry.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h2 class="section-title">Quick notes</h2>
+          <textarea placeholder="Write what topic you finished, weak points, tomorrow's target..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const defaultTasks = [
+      { title:'Math block 1 completed', detail:'90-120 mins of core math questions', pr:'high' },
+      { title:'Chemistry block completed', detail:'60-75 mins theory + reactions + questions', pr:'high' },
+      { title:'Python revision done', detail:'45 mins max, only revision or pending code', pr:'med' },
+      { title:'Google Cloud Arcade done', detail:'Minimum 1 hour, target 1.5 hours', pr:'high' },
+      { title:'Workout done', detail:'1 hour after evening snacks', pr:'low' },
+      { title:'Night revision done', detail:'Final 45-60 mins for weak topics', pr:'high' },
+      { title:'No early CODM', detail:'Game only after major study blocks', pr:'med' },
+      { title:'Next-day plan written', detail:'List tomorrow topics before sleep', pr:'med' }
+    ];
+
+    const state = { tasks: defaultTasks.map(t => ({...t, done:false})) };
+    const tasksEl = document.getElementById('tasks');
+    const doneCount = document.getElementById('doneCount');
+    const scorePct = document.getElementById('scorePct');
+
+    function render(){
+      tasksEl.innerHTML = '';
+      state.tasks.forEach((t, i) => {
+        const row = document.createElement('label');
+        row.className = 'task' + (t.done ? ' done' : '');
+        row.innerHTML = `
+          <input type="checkbox" ${t.done ? 'checked' : ''} data-i="${i}">
+          <div>
+            <div class="task-title"><strong>${t.title}</strong></div>
+            <div class="small">${t.detail}</div>
+          </div>
+          <div class="tag ${t.pr}">${t.pr}</div>
+        `;
+        tasksEl.appendChild(row);
+      });
+      const done = state.tasks.filter(t => t.done).length;
+      doneCount.textContent = `${done}/${state.tasks.length}`;
+      scorePct.textContent = `${Math.round(done/state.tasks.length*100)}%`;
+      bind();
+    }
+
+    function bind(){
+      document.querySelectorAll('input[data-i]').forEach(el => {
+        el.onchange = e => {
+          state.tasks[+e.target.dataset.i].done = e.target.checked;
+          render();
+        };
+      });
+    }
+
+    document.getElementById('resetDay').onclick = () => {
+      state.tasks.forEach(t => t.done = false);
+      render();
+    };
+
+    document.getElementById('exportState').onclick = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'study-tracker-status.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    document.getElementById('themeToggle').onclick = () => {
+      const html = document.documentElement;
+      html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    };
+
+    render();
+  </script>
+</body>
+</html>
