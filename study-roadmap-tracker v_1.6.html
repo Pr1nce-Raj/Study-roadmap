@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Study Roadmap Tracker v1.6</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="light"]{
+      --bg:#f7f6f2;--surface:#fff;--surface-2:#f1efe9;--text:#22201b;--muted:#6d6a63;
+      --primary:#01696f;--primary-2:#0c4e54;--success:#437a22;--warning:#b06a00;--danger:#a13544;
+      --border:#d9d5ce;--shadow:0 10px 30px rgba(0,0,0,.08);--radius:18px;
+      --google:#1a73e8;
+    }
+    [data-theme="dark"]{
+      --bg:#171614;--surface:#1f1d1a;--surface-2:#292622;--text:#ece8df;--muted:#a9a49a;
+      --primary:#4f98a3;--primary-2:#76b7c0;--success:#7fb55d;--warning:#e0a83f;--danger:#dd6974;
+      --border:#3a352f;--shadow:0 10px 30px rgba(0,0,0,.35);--google:#8ab4f8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Satoshi',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;}
+    .view{display:none;min-height:100vh;} .view.active{display:block;}
+    .wrap{max-width:1180px;margin:auto;padding:24px;}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
+    h1{font-size:clamp(1.6rem,3vw,2.8rem);} .sub{color:var(--muted);margin-top:4px;font-size:.95rem;}
+    .pill-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .pill{display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(1,105,111,.12);color:var(--primary);font-weight:700;font-size:.9rem;}
+    .pill-input{background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font:inherit;font-weight:700;min-width:200px;font-size:.9rem;}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .btn{border:none;background:var(--primary);color:#fff;padding:9px 15px;border-radius:12px;cursor:pointer;font-weight:700;font-size:.88rem;transition:background .18s,color .18s,border-color .18s,opacity .18s;white-space:nowrap;}
+    .btn:hover{background:var(--primary-2);} .btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);} .btn.secondary:hover{background:var(--border);}
+    .btn.edit-btn{background:transparent;color:var(--primary);border:1px solid var(--primary);padding:3px 10px;font-size:.78rem;border-radius:8px;font-weight:700;}
+    .btn.edit-btn:hover{background:var(--primary);color:#fff;}
+    .btn.danger-btn{background:transparent;color:var(--danger);border:1px solid var(--danger);padding:5px 9px;font-size:.78rem;}
+    .btn.danger-btn:hover{background:var(--danger);color:#fff;}
+    .btn.progress-nav{background:var(--primary);color:#fff;padding:9px 16px;border-radius:12px;font-size:.88rem;font-weight:700;}
+    .btn.google-btn{background:transparent;border:1px solid var(--google);color:var(--google);}
+    .btn.google-btn:hover{background:var(--google);color:#fff;border-color:var(--google);}
+    .sync-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:.8rem;font-weight:700;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);}
+    .sync-pill.synced{color:var(--success);border-color:var(--success);} .sync-pill.local{color:var(--warning);border-color:var(--warning);}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+    .section-title{font-size:1.1rem;font-weight:700;} .small{color:var(--muted);font-size:.88rem;} .section-note{color:var(--muted);font-size:.8rem;margin:2px 0 10px;}
+    .hidden{display:none!important;}
+    .subject{display:grid;grid-template-columns:108px 1fr 58px 30px;gap:10px;align-items:center;margin:10px 0;}
+    .subject input[type=range]{width:100%;accent-color:var(--primary);cursor:pointer;} .pct-label{font-size:.88rem;font-weight:700;color:var(--primary);text-align:right;}
+    .subject-name-input{background:transparent;border:none;border-bottom:1.5px solid transparent;font:inherit;font-weight:700;color:var(--text);width:104px;padding:2px 4px;transition:border-color .18s;font-size:.9rem;}
+    .subject-name-input:focus{outline:none;border-bottom-color:var(--primary);}
+    .task{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;align-items:start;padding:11px;border:1px solid var(--border);border-radius:13px;margin:9px 0;background:var(--surface);transition:opacity .2s;}
+    .task.done{opacity:.58;} .task.done .task-title{text-decoration:line-through;} input[type="checkbox"]{width:19px;height:19px;margin-top:3px;accent-color:var(--primary);cursor:pointer;}
+    .tag{font-size:.76rem;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;align-self:start;}
+    .tag.high{color:var(--danger);border-color:var(--danger);} .tag.med{color:var(--warning);border-color:var(--warning);} .tag.low{color:var(--success);border-color:var(--success);}
+    .add-panel{margin-top:11px;padding:13px;border:2px dashed var(--border);border-radius:13px;background:var(--surface-2);}
+    .add-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:9px;align-items:center;}
+    .add-form input,.add-form select,.add-form textarea{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 11px;font:inherit;font-size:.88rem;outline:none;transition:border-color .18s;}
+    .add-form input:focus,.add-form select:focus,.add-form textarea:focus{border-color:var(--primary);} .add-form textarea{resize:vertical;min-height:42px;}
+    .footer-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px;} .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .stat{padding:13px;border-radius:13px;background:var(--surface-2);border:1px solid var(--border);} .stat strong{display:block;font-size:1.45rem;margin-top:3px;}
+    .snap-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.9rem;} .snap-row:last-child{border-bottom:none;} .snap-label{color:var(--muted);}
+    .routine-item,.rule-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);} .routine-item:last-child,.rule-item:last-child{border-bottom:none;}
+    .routine-item span,.rule-item span{flex:1;font-size:.9rem;} .routine-item .item-actions,.rule-item .item-actions{display:flex;gap:6px;flex-shrink:0;}
+    .routine-edit-input,.rule-edit-input{flex:1;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font:inherit;font-size:.88rem;} .rule-edit-input{resize:none;line-height:1.4;}
+    textarea.notes-area{width:100%;min-height:100px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:13px;padding:11px;font:inherit;font-size:.9rem;}
+    .save-day-bar{background:var(--primary);color:#fff;padding:13px 20px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+    .save-day-bar span{font-size:.95rem;} .prog-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;} .prog-top h2{font-size:clamp(1.4rem,2.5vw,2rem);}
+    .month-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;} .month-label{font-size:1.05rem;font-weight:700;margin-bottom:14px;color:var(--primary);}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;} .cal-day-header{font-size:.75rem;color:var(--muted);text-align:center;font-weight:700;padding:4px 0;}
+    .cal-day{width:100%;padding-top:100%;position:relative;border-radius:8px;cursor:default;border:1px solid transparent;transition:transform .12s;overflow:visible;}
+    .cal-day:hover{transform:scale(1.04);} .cal-day-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;line-height:1.2;}
+    .cal-day.empty{background:transparent;border:none;} .cal-day.future{background:var(--surface-2);} .cal-day.future .cal-day-inner{color:var(--muted);} .cal-day.no-data{background:var(--surface-2);border:1px dashed var(--border);} .cal-day.no-data .cal-day-inner{color:var(--muted);}
+    .pct-tiny{font-size:.65rem;font-weight:400;opacity:.85;margin-top:1px;}
+    .cal-tooltip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:5px 10px;border-radius:8px;font-size:.75rem;white-space:nowrap;pointer-events:none;z-index:20;font-weight:400;}
+    .cal-day:hover .cal-tooltip{display:block;}
+    .c0{background:#fff3e0;} .c0 .cal-day-inner{color:#7a4000;} .c1{background:#ffe0b2;} .c1 .cal-day-inner{color:#7a3500;} .c2{background:#ffcc80;} .c2 .cal-day-inner{color:#6d2e00;} .c3{background:#ffb74d;} .c3 .cal-day-inner{color:#5d2400;} .c4{background:#ffa726;} .c4 .cal-day-inner{color:#4e1c00;} .c5{background:#fb8c00;} .c5 .cal-day-inner{color:#3c1300;} .c6{background:#e65100;} .c6 .cal-day-inner{color:#fff;} .c7{background:#bf360c;} .c7 .cal-day-inner{color:#fff;}
+    .week-chart{margin-top:4px;} .week-row{display:flex;align-items:center;gap:10px;margin:7px 0;} .week-label{width:60px;font-size:.82rem;color:var(--muted);text-align:right;flex-shrink:0;} .week-bar-wrap{flex:1;background:var(--surface-2);border-radius:999px;height:20px;overflow:hidden;} .week-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#fb8c00,#bf360c);transition:width .5s;} .week-pct{width:38px;font-size:.82rem;font-weight:700;color:var(--primary);}
+    @media(max-width:900px){.grid,.two{grid-template-columns:1fr;}.subject{grid-template-columns:88px 1fr 50px 26px;}.add-form{grid-template-columns:1fr 1fr;}.add-form .span-2{grid-column:span 2;}.cal-grid{gap:4px;}}
+    @media(max-width:560px){.add-form{grid-template-columns:1fr;}.add-form .span-2{grid-column:1;}.cal-day-inner{font-size:.68rem;}}
+  </style>
+</head>
+<body>
+<div id="trackerView" class="view active">
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="pill-wrap">
+        <div id="pillDisplay" class="pill">2-week focused exam mode</div>
+        <input id="pillInput" class="pill-input hidden" type="text" value="2-week focused exam mode" maxlength="60">
+        <button class="btn edit-btn" id="editPillBtn" title="Edit tag">Edit</button>
+      </div>
+      <h1>Study Roadmap Tracker</h1>
+      <div class="sub">Tick tasks, track progress, stay honest.</div>
+    </div>
+    <div class="top-actions">
+      <div id="syncStatus" class="sync-pill local">⚡ Local only</div>
+      <button class="btn google-btn" id="loginBtn">Login to Sync</button>
+      <button class="btn secondary" id="themeToggle">Toggle theme</button>
+      <button class="btn progress-nav" id="goProgress">&#128202; Progress</button>
+    </div>
+  </div>
+
+  <div class="save-day-bar">
+    <span>Save today's progress to the history log when you're done for the day.</span>
+    <button class="btn" id="saveDayBtn" style="background:#fff;color:var(--primary);">Save Day</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="section-title">Priority split</h2>
+          <button class="btn secondary" id="toggleSubjectPanelBtn" style="font-size:.82rem;padding:6px 11px;">+ Subject</button>
+        </div>
+        <div class="section-note">Click subject name to rename. Drag slider to update %.</div>
+        <div id="subjectList"></div>
+        <div id="subjectPanel" class="add-panel hidden">
+          <div class="add-form">
+            <input type="text" id="newSubjectName" placeholder="Subject name" maxlength="40">
+            <input type="number" id="newSubjectPct" placeholder="Start %" min="0" max="100">
+            <button class="btn" id="addSubjectBtn">Add</button>
+            <button class="btn secondary" id="cancelSubjectBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-header">
+          <h2 class="section-title">Daily checklist</h2>
+          <button class="btn secondary" id="toggleTaskPanelBtn" style="font-size:.82rem;padding:6px 11px;">+ Task</button>
+        </div>
+        <div id="tasks"></div>
+        <div id="taskPanel" class="add-panel hidden">
+          <div class="add-form">
+            <input type="text" id="newTitle" placeholder="Task title" maxlength="80"/>
+            <input type="text" id="newDetail" placeholder="Detail / time (optional)" maxlength="120"/>
+            <select id="newPr"><option value="high">High</option><option value="med" selected>Med</option><option value="low">Low</option></select>
+            <button class="btn" id="addTaskBtn">Add</button>
+            <button class="btn secondary span-2" id="cancelTaskBtn">Cancel</button>
+          </div>
+        </div>
+        <div class="footer-actions">
+          <button class="btn" id="resetDay">Reset all</button>
+          <button class="btn secondary" id="exportState">Export JSON</button>
+          <button class="btn secondary" id="importStateBtn">Import JSON</button>
+          <input type="file" id="importFileInput" accept=".json" class="hidden">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2 class="section-title" style="margin-bottom:13px;">Today snapshot</h2>
+        <div class="two"><div class="stat">Completion<strong id="doneCount">0/0</strong></div><div class="stat">Score<strong id="scorePct">0%</strong></div></div>
+        <div id="snapBreakdown" style="margin-top:13px;"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-header"><h2 class="section-title">Daily routine</h2><button class="btn secondary" id="toggleRoutinePanelBtn" style="font-size:.82rem;padding:6px 11px;">+ Slot</button></div>
+        <div class="section-note">Use Edit to rename a slot, X to remove.</div>
+        <div id="routineList"></div>
+        <div id="routinePanel" class="add-panel hidden"><div class="add-form"><input type="text" id="newRoutineText" placeholder="e.g. 9:00-10:00 pm - Revision" maxlength="120"><button class="btn" id="addRoutineBtn">Add</button><button class="btn secondary" id="cancelRoutineBtn">Cancel</button></div></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-header"><h2 class="section-title">Rules for yourself</h2><button class="btn secondary" id="toggleRulePanelBtn" style="font-size:.82rem;padding:6px 11px;">+ Rule</button></div>
+        <div class="section-note">Use Edit to update a rule, X to remove.</div>
+        <div id="ruleList"></div>
+        <div id="rulePanel" class="add-panel hidden"><div class="add-form"><textarea id="newRuleText" placeholder="Write a new rule"></textarea><button class="btn" id="addRuleBtn">Add</button><button class="btn secondary" id="cancelRuleBtn">Cancel</button></div></div>
+      </div>
+
+      <div class="card" style="margin-top:18px;"><h2 class="section-title" style="margin-bottom:9px;">Quick notes</h2><textarea id="notesArea" class="notes-area" placeholder="Topics finished, weak points, tomorrow's target..."></textarea></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="progressView" class="view">
+<div class="wrap">
+  <div class="prog-top">
+    <div><h2>Progress History</h2><div class="sub">Daily goals completion &mdash; calendar heatmap + weekly averages</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><button class="btn secondary" id="clearHistoryBtn">Clear history</button><button class="btn progress-nav" id="goTracker">&larr; Back to Tracker</button></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h2 class="section-title">Completion scale</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><span class="small">0%</span><div style="width:28px;height:22px;border-radius:6px;" class="c0"></div><div style="width:28px;height:22px;border-radius:6px;" class="c1"></div><div style="width:28px;height:22px;border-radius:6px;" class="c2"></div><div style="width:28px;height:22px;border-radius:6px;" class="c3"></div><div style="width:28px;height:22px;border-radius:6px;" class="c4"></div><div style="width:28px;height:22px;border-radius:6px;" class="c5"></div><div style="width:28px;height:22px;border-radius:6px;" class="c6"></div><div style="width:28px;height:22px;border-radius:6px;" class="c7"></div><span class="small">100%</span><span class="small" style="margin-left:12px;">Hover a day to see details.</span></div></div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h2 class="section-title">Weekly averages</h2></div><div id="weeklyBars" class="week-chart"></div></div>
+  <div id="calendarContainer"></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBgXmb3bQPup_GwQdw3H54KlKxzUPiiPl8",
+  authDomain: "studytracker-ccb52.firebaseapp.com",
+  projectId: "studytracker-ccb52",
+  storageBucket: "studytracker-ccb52.firebasestorage.app",
+  messagingSenderId: "248339185962",
+  appId: "1:248339185962:web:7c4f9d3d08cb5f0ce4b1fd"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubSync = null;
+let applyingRemote = false;
+
+const DEFAULT_STATE = {
+  subjects:[{name:'Math',pct:20},{name:'Chem',pct:10},{name:'Python',pct:80},{name:'Web Dev',pct:60}],
+  tasks:[
+    {title:'Math block 1 completed',detail:'90-120 mins of core math questions',pr:'high',done:false},
+    {title:'Chemistry block completed',detail:'60-75 mins theory + reactions + questions',pr:'high',done:false},
+    {title:'Python revision done',detail:'45 mins max, only revision or pending code',pr:'med',done:false},
+    {title:'Google Cloud Arcade done',detail:'Minimum 1 hour, target 1.5 hours',pr:'high',done:false},
+    {title:'Workout done',detail:'1 hour after evening snacks',pr:'low',done:false},
+    {title:'Night revision done',detail:'Final 45-60 mins for weak topics',pr:'high',done:false},
+    {title:'No early CODM',detail:'Game only after major study blocks',pr:'med',done:false},
+    {title:'Next-day plan written',detail:'List tomorrow topics before sleep',pr:'med',done:false}
+  ],
+  routine:[
+    '2:30-4:30 pm - Math problem solving','4:45-6:00 pm - Chemistry theory + short notes','6:00-7:00 pm - Workout + snacks','7:15-8:00 pm - Python revision / lab work','8:00-8:30 pm - Dinner','8:45-10:15 pm - Google Cloud Arcade','10:30-11:30 pm - Math/Chem weak area revision','11:30-12:15 am - CODM or light break','12:15-1:15 am - Quick review + next-day planning'
+  ],
+  rules:[
+    'Do not start CODM before finishing the first 2 study blocks.','Treat Python and Web Dev as maintenance, not main battle, until mid-sems are over.','If college return is delayed, shift one block after dinner instead of skipping it.','Target sleep by 1:00 am this week, then 12:30 am next week.','Make one-page formula/reaction sheets for Math and Chemistry.'
+  ],
+  notes:''
+};
+
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function loadState(){ try{ return JSON.parse(localStorage.getItem('srt_state')) || deepClone(DEFAULT_STATE); } catch(e){ return deepClone(DEFAULT_STATE); } }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem('srt_history')) || {}; } catch(e){ return {}; } }
+let state = loadState();
+let history = loadHistory();
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hide(id){ document.getElementById(id).classList.add('hidden'); }
+function toggle(id){ document.getElementById(id).classList.toggle('hidden'); }
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+async function saveState(){
+  localStorage.setItem('srt_state', JSON.stringify(state));
+  if(currentUser && !applyingRemote){ await setDoc(doc(db,'users',currentUser.uid), { state }, { merge:true }); }
+}
+async function saveHistory(nextHistory){
+  history = nextHistory;
+  localStorage.setItem('srt_history', JSON.stringify(history));
+  if(currentUser && !applyingRemote){ await setDoc(doc(db,'users',currentUser.uid), { history }, { merge:true }); }
+}
+
+function setLoginBusy(busy, text){
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = busy;
+  btn.style.opacity = busy ? '0.65' : '1';
+  if(text) btn.textContent = text;
+}
+
+function updateSyncStatus(){
+  const el = document.getElementById('syncStatus');
+  const btn = document.getElementById('loginBtn');
+  if(currentUser){
+    el.className = 'sync-pill synced';
+    el.textContent = '☁ Synced';
+    btn.textContent = 'Logout (' + (currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'User') + ')';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  } else {
+    el.className = 'sync-pill local';
+    el.textContent = '⚡ Local only';
+    btn.textContent = 'Login to Sync';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function renderSubjects(){
+  const el=document.getElementById('subjectList'); el.innerHTML='';
+  state.subjects.forEach((s,i)=>{
+    const row=document.createElement('div'); row.className='subject';
+    row.innerHTML=`<input class="subject-name-input" value="${esc(s.name)}"><input type="range" min="0" max="100" value="${s.pct}"><div class="pct-label">${s.pct}%</div><button class="btn danger-btn">X</button>`;
+    row.querySelector('.subject-name-input').onchange = async e => { state.subjects[i].name = e.target.value.trim() || s.name; await saveState(); renderSubjects(); };
+    row.querySelector('input[type="range"]').oninput = async e => { state.subjects[i].pct = +e.target.value; await saveState(); renderSubjects(); };
+    row.querySelector('.danger-btn').onclick = async () => { state.subjects.splice(i,1); await saveState(); renderSubjects(); };
+    el.appendChild(row);
+  });
+}
+
+function renderTasks(){
+  const el=document.getElementById('tasks'); el.innerHTML='';
+  state.tasks.forEach((t,i)=>{
+    const row=document.createElement('div'); row.className='task'+(t.done?' done':'');
+    row.innerHTML=`<input type="checkbox" ${t.done?'checked':''}><div><div class="task-title"><strong>${esc(t.title)}</strong></div>${t.detail?`<div class="small">${esc(t.detail)}</div>`:''}</div><div class="tag ${t.pr}">${t.pr}</div><button class="btn danger-btn">X</button>`;
+    row.querySelector('input').onchange = async e => { state.tasks[i].done = e.target.checked; state.tasks[i].updatedAt = Date.now(); await saveState(); renderTasks(); renderSnapshot(); };
+    row.querySelector('.danger-btn').onclick = async () => { state.tasks.splice(i,1); await saveState(); renderTasks(); renderSnapshot(); };
+    el.appendChild(row);
+  });
+  renderSnapshot();
+}
+
+function renderSnapshot(){
+  const done=state.tasks.filter(t=>t.done).length, total=state.tasks.length;
+  document.getElementById('doneCount').textContent = done+'/'+total;
+  document.getElementById('scorePct').textContent = total ? Math.round(done/total*100)+'%' : '--';
+  const byPr={high:{total:0,done:0},med:{total:0,done:0},low:{total:0,done:0}};
+  state.tasks.forEach(t=>{ if(byPr[t.pr]){ byPr[t.pr].total++; if(t.done) byPr[t.pr].done++; } });
+  const labels={high:'High priority',med:'Medium priority',low:'Low priority'};
+  document.getElementById('snapBreakdown').innerHTML = Object.entries(byPr).map(([k,v])=>`<div class="snap-row"><span class="snap-label">${labels[k]}</span><span><strong>${v.done}/${v.total}</strong></span></div>`).join('');
+}
+
+function renderRoutine(){
+  const el=document.getElementById('routineList'); el.innerHTML='';
+  state.routine.forEach((r,i)=>{
+    const row=document.createElement('div'); row.className='routine-item';
+    const span=document.createElement('span'); span.textContent=r;
+    const actions=document.createElement('div'); actions.className='item-actions';
+    const eb=document.createElement('button'); eb.className='btn edit-btn'; eb.textContent='Edit';
+    eb.onclick=()=>{
+      const inp=document.createElement('input'); inp.className='routine-edit-input'; inp.value=r;
+      inp.onblur=async()=>{ state.routine[i]=inp.value.trim()||r; await saveState(); renderRoutine(); };
+      inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape') renderRoutine(); };
+      row.replaceChild(inp,span); actions.removeChild(eb); inp.focus(); inp.select();
+    };
+    const dbtn=document.createElement('button'); dbtn.className='btn danger-btn'; dbtn.textContent='X';
+    dbtn.onclick=async()=>{ state.routine.splice(i,1); await saveState(); renderRoutine(); };
+    actions.append(eb,dbtn); row.append(span,actions); el.appendChild(row);
+  });
+}
+
+function renderRules(){
+  const el=document.getElementById('ruleList'); el.innerHTML='';
+  state.rules.forEach((r,i)=>{
+    const row=document.createElement('div'); row.className='rule-item';
+    const span=document.createElement('span'); span.textContent=r;
+    const actions=document.createElement('div'); actions.className='item-actions';
+    const eb=document.createElement('button'); eb.className='btn edit-btn'; eb.textContent='Edit';
+    eb.onclick=()=>{
+      const ta=document.createElement('textarea'); ta.className='rule-edit-input'; ta.rows=2; ta.value=r;
+      ta.onblur=async()=>{ state.rules[i]=ta.value.trim()||r; await saveState(); renderRules(); };
+      ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ta.blur(); } if(e.key==='Escape') renderRules(); };
+      row.replaceChild(ta,span); actions.removeChild(eb); ta.focus(); ta.select();
+    };
+    const dbtn=document.createElement('button'); dbtn.className='btn danger-btn'; dbtn.textContent='X';
+    dbtn.onclick=async()=>{ state.rules.splice(i,1); await saveState(); renderRules(); };
+    actions.append(eb,dbtn); row.append(span,actions); el.appendChild(row);
+  });
+}
+
+function pctToClass(pct){ if(pct<15) return 'c0'; if(pct<28) return 'c1'; if(pct<42) return 'c2'; if(pct<55) return 'c3'; if(pct<68) return 'c4'; if(pct<80) return 'c5'; if(pct<92) return 'c6'; return 'c7'; }
+function makeCalDay(classes, innerHTML){ const cell=document.createElement('div'); cell.className='cal-day '+classes; const inner=document.createElement('div'); inner.className='cal-day-inner'; inner.innerHTML=innerHTML; cell.appendChild(inner); return cell; }
+
+function renderProgress(){
+  const cal=document.getElementById('calendarContainer'); cal.innerHTML='';
+  const wb=document.getElementById('weeklyBars'); wb.innerHTML='';
+  if(Object.keys(history).length===0){
+    cal.innerHTML='<div class="card"><p style="color:var(--muted);padding:12px 0;">No history yet. Use the <strong>Save Day</strong> button on the tracker to log daily progress.</p></div>';
+    wb.innerHTML='<p style="color:var(--muted);font-size:.9rem;">No data yet.</p>';
+    return;
+  }
+  const weeks={};
+  Object.entries(history).forEach(([key,val])=>{
+    const d=new Date(key), jan1=new Date(d.getFullYear(),0,1);
+    const wn=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+    const wk=d.getFullYear()+'-W'+String(wn).padStart(2,'0');
+    if(!weeks[wk]) weeks[wk]={sum:0,count:0};
+    weeks[wk].sum+=val.pct; weeks[wk].count++;
+  });
+  Object.keys(weeks).sort().reverse().slice(0,10).forEach(wk=>{
+    const avg=Math.round(weeks[wk].sum/weeks[wk].count);
+    const row=document.createElement('div'); row.className='week-row';
+    row.innerHTML=`<div class="week-label">${wk}</div><div class="week-bar-wrap"><div class="week-bar-fill" style="width:${avg}%"></div></div><div class="week-pct">${avg}%</div>`;
+    wb.appendChild(row);
+  });
+  const months={};
+  Object.entries(history).forEach(([key,val])=>{
+    const parts=key.split('-'), mk=parts[0]+'-'+parts[1];
+    if(!months[mk]) months[mk]=[];
+    months[mk].push({day:parseInt(parts[2],10),pct:val.pct,done:val.done,total:val.total,key});
+  });
+  const sortedMonths=Object.keys(months).sort().reverse();
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  sortedMonths.forEach(mk=>{
+    const parts=mk.split('-'); const y=parts[0], m=parts[1];
+    const year=parseInt(y,10), month=parseInt(m,10)-1;
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const firstDow=new Date(year,month,1).getDay();
+    const block=document.createElement('div'); block.className='month-block'; block.innerHTML=`<div class="month-label">${monthNames[month]} ${year}</div>`;
+    const grid=document.createElement('div'); grid.className='cal-grid';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(dn=>{ const h=document.createElement('div'); h.className='cal-day-header'; h.textContent=dn; grid.appendChild(h); });
+    for(let i=0;i<firstDow;i++) grid.appendChild(makeCalDay('empty',''));
+    const today=new Date();
+    for(let d=1; d<=daysInMonth; d++){
+      const dayKey=y+'-'+m+'-'+String(d).padStart(2,'0');
+      const rec=history[dayKey]; const isFuture=new Date(year,month,d)>today;
+      let cell;
+      if(isFuture){
+        cell=makeCalDay('future', d);
+      } else if(rec){
+        const tip=`<span class="cal-tooltip">${dayKey}: ${rec.done}/${rec.total} tasks (${rec.pct}%)</span>`;
+        cell=makeCalDay(pctToClass(rec.pct), `${d}<div class="pct-tiny">${rec.pct}%</div>${tip}`);
+      } else {
+        const tip=`<span class="cal-tooltip">${dayKey}: No data logged</span>`;
+        cell=makeCalDay('no-data', `${d}${tip}`);
+      }
+      grid.appendChild(cell);
+    }
+    block.appendChild(grid); cal.appendChild(block);
+  });
+}
+
+function renderAll(){
+  renderSubjects(); renderTasks(); renderRoutine(); renderRules(); renderProgress();
+  document.getElementById('notesArea').value = state.notes || '';
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  currentUser = user || null;
+  updateSyncStatus();
+  if(unsubSync){ unsubSync(); unsubSync = null; }
+  if(user){
+    const userRef = doc(db,'users',user.uid);
+    const existing = await getDoc(userRef);
+    if(existing.exists()){
+      const cloud = existing.data() || {};
+      applyingRemote = true;
+      if(cloud.state){ state = Object.assign(deepClone(DEFAULT_STATE), cloud.state); localStorage.setItem('srt_state', JSON.stringify(state)); }
+      if(cloud.history){ history = cloud.history; localStorage.setItem('srt_history', JSON.stringify(history)); }
+      applyingRemote = false;
+      renderAll();
+    } else {
+      await setDoc(userRef, { state, history }, { merge:true });
+    }
+    unsubSync = onSnapshot(userRef, snap => {
+  if(!snap.exists()) return;
+  const cloud = snap.data() || {};
+  applyingRemote = true;
+
+  if(cloud.state){
+    const cloudState = Object.assign(deepClone(DEFAULT_STATE), cloud.state);
+    if(cloudState.tasks && state.tasks){
+      const localMap = {};
+      state.tasks.forEach(t => localMap[t.title] = t);
+      state.tasks = cloudState.tasks.map(ct => {
+        const local = localMap[ct.title];
+        if(!local) return ct;
+        return (local.updatedAt||0) > (ct.updatedAt||0) ? local : ct;
+      });
+      cloudState.tasks.forEach(ct => { if(!localMap[ct.title]) state.tasks.push(ct); });
+    } else {
+      state.tasks = cloudState.tasks;
+    }
+    state.subjects = cloudState.subjects || state.subjects;
+    state.routine  = cloudState.routine  || state.routine;
+    state.rules    = cloudState.rules    || state.rules;
+    state.notes    = cloudState.notes    || state.notes;
+    localStorage.setItem('srt_state', JSON.stringify(state));
+  }
+
+  if(cloud.history){
+    history = cloud.history;
+    localStorage.setItem('srt_history', JSON.stringify(history));
+  }
+
+  applyingRemote = false;
+  renderAll();
+  if(currentUser) setDoc(doc(db,'users',currentUser.uid), { state }, { merge:true });
+});
+  }
+});
+
+document.getElementById('loginBtn').onclick = async () => {
+  if(currentUser){
+    if(confirm('Are you sure you want to logout?')){
+      setLoginBusy(true, 'Logging out...');
+      await signOut(auth);
+    }
+  } else {
+    setLoginBusy(true, 'Signing in...');
+    try{
+      await signInWithPopup(auth, provider);
+    } catch(err){
+      console.error('Login failed:', err);
+      setLoginBusy(false, 'Login to Sync');
+      if(err.code !== 'auth/popup-closed-by-user'){
+        alert('Google login failed: ' + err.message);
+      }
+    }
+  }
+};
+
+// ── SAVE DAY ──────────────────────────────────────────────────────────
+document.getElementById('saveDayBtn').onclick = async function(){
+  const done=state.tasks.filter(t=>t.done).length, total=state.tasks.length;
+  const pct=total?Math.round(done/total*100):0; const key=todayKey();
+  history[key]={pct,done,total,subjects:deepClone(state.subjects),notes:state.notes||'',ts:Date.now()};
+  await saveHistory(history);
+  renderProgress();
+  const b=this; b.textContent='Saved!'; b.style.background='#d4edda'; b.style.color='#437a22';
+  setTimeout(()=>{ b.textContent='Save Day'; b.style.background='#fff'; b.style.color='var(--primary)'; },2200);
+};
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────────────
+document.getElementById('exportState').onclick = function(){
+  const weeks={}, months={};
+  Object.entries(history).forEach(([key,val])=>{
+    const d=new Date(key), jan1=new Date(d.getFullYear(),0,1); const wn=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7); const wk=d.getFullYear()+'-W'+String(wn).padStart(2,'0');
+    if(!weeks[wk]) weeks[wk]={days:[],avg:0}; weeks[wk].days.push({date:key,pct:val.pct,done:val.done,total:val.total});
+    const parts=key.split('-'), mk=parts[0]+'-'+parts[1];
+    if(!months[mk]) months[mk]={days:[],avg:0,bestDay:null,worstDay:null}; months[mk].days.push({date:key,pct:val.pct,done:val.done,total:val.total});
+  });
+  Object.keys(weeks).forEach(wk=>{ const sum=weeks[wk].days.reduce((a,d)=>a+d.pct,0); weeks[wk].avg=Math.round(sum/weeks[wk].days.length); });
+  Object.keys(months).forEach(mk=>{ const days=months[mk].days; const sum=days.reduce((a,d)=>a+d.pct,0); months[mk].avg=Math.round(sum/days.length); months[mk].bestDay=days.reduce((a,b)=>a.pct>=b.pct?a:b); months[mk].worstDay=days.reduce((a,b)=>a.pct<=b.pct?a:b); });
+  const exportData={exportedAt:new Date().toISOString(),currentState:state,dailyHistory:history,weeklySummary:weeks,monthlySummary:months};
+  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='study-tracker-export-'+todayKey()+'.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+document.getElementById('importStateBtn').onclick = ()=> document.getElementById('importFileInput').click();
+document.getElementById('importFileInput').onchange = function(e){
+  const file=e.target.files[0]; if(!file) return; const reader=new FileReader();
+  reader.onload = async ev => {
+    try{
+      const data=JSON.parse(ev.target.result); const imported=data.currentState||data; const importedHistory=data.dailyHistory||{};
+      if(imported.tasks && imported.subjects){ state=Object.assign(deepClone(DEFAULT_STATE), imported); history=Object.assign({}, history, importedHistory); await saveState(); await saveHistory(history); renderAll(); alert('Import successful! History merged.'); }
+      else alert('Invalid file format.');
+    } catch(err){ alert('Could not parse JSON file.'); }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+};
+
+// ── PILL ──────────────────────────────────────────────────────────────
+const pillDisplay=document.getElementById('pillDisplay'), pillInput=document.getElementById('pillInput');
+document.getElementById('editPillBtn').onclick=()=>{ pillDisplay.classList.add('hidden'); pillInput.classList.remove('hidden'); pillInput.focus(); pillInput.select(); };
+pillInput.onblur=()=>{ pillDisplay.textContent=pillInput.value.trim()||'Focused mode'; pillInput.classList.add('hidden'); pillDisplay.classList.remove('hidden'); };
+pillInput.onkeydown=e=>{ if(e.key==='Enter') pillInput.blur(); if(e.key==='Escape'){ pillInput.value=pillDisplay.textContent; pillInput.blur(); } };
+
+// ── PANELS ────────────────────────────────────────────────────────────
+document.getElementById('toggleSubjectPanelBtn').onclick=()=>{ toggle('subjectPanel'); if(!document.getElementById('subjectPanel').classList.contains('hidden')) document.getElementById('newSubjectName').focus(); };
+document.getElementById('toggleTaskPanelBtn').onclick=()=>{ toggle('taskPanel'); if(!document.getElementById('taskPanel').classList.contains('hidden')) document.getElementById('newTitle').focus(); };
+document.getElementById('toggleRoutinePanelBtn').onclick=()=>{ toggle('routinePanel'); if(!document.getElementById('routinePanel').classList.contains('hidden')) document.getElementById('newRoutineText').focus(); };
+document.getElementById('toggleRulePanelBtn').onclick=()=>{ toggle('rulePanel'); if(!document.getElementById('rulePanel').classList.contains('hidden')) document.getElementById('newRuleText').focus(); };
+document.getElementById('cancelSubjectBtn').onclick=()=>hide('subjectPanel');
+document.getElementById('cancelTaskBtn').onclick=()=>hide('taskPanel');
+document.getElementById('cancelRoutineBtn').onclick=()=>hide('routinePanel');
+document.getElementById('cancelRuleBtn').onclick=()=>hide('rulePanel');
+
+document.getElementById('addSubjectBtn').onclick=async()=>{ const name=document.getElementById('newSubjectName').value.trim(); let pct=parseInt(document.getElementById('newSubjectPct').value||'0',10); if(!name){ document.getElementById('newSubjectName').focus(); return; } if(isNaN(pct)) pct=0; pct=Math.max(0,Math.min(100,pct)); state.subjects.push({name,pct}); document.getElementById('newSubjectName').value=''; document.getElementById('newSubjectPct').value=''; hide('subjectPanel'); await saveState(); renderSubjects(); };
+document.getElementById('addTaskBtn').onclick=async()=>{ const title=document.getElementById('newTitle').value.trim(); const detail=document.getElementById('newDetail').value.trim(); const pr=document.getElementById('newPr').value; if(!title){ document.getElementById('newTitle').focus(); return; } state.tasks.push({title,detail,pr,done:false,updatedAt:Date.now()}); document.getElementById('newTitle').value=''; document.getElementById('newDetail').value=''; document.getElementById('newPr').value='med'; hide('taskPanel'); await saveState(); renderTasks(); };
+document.getElementById('newTitle').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addTaskBtn').click(); });
+document.getElementById('addRoutineBtn').onclick=async()=>{ const val=document.getElementById('newRoutineText').value.trim(); if(!val){ document.getElementById('newRoutineText').focus(); return; } state.routine.push(val); document.getElementById('newRoutineText').value=''; hide('routinePanel'); await saveState(); renderRoutine(); };
+document.getElementById('newRoutineText').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addRoutineBtn').click(); });
+document.getElementById('addRuleBtn').onclick=async()=>{ const val=document.getElementById('newRuleText').value.trim(); if(!val){ document.getElementById('newRuleText').focus(); return; } state.rules.push(val); document.getElementById('newRuleText').value=''; hide('rulePanel'); await saveState(); renderRules(); };
+
+// ── MISC ──────────────────────────────────────────────────────────────
+document.getElementById('notesArea').addEventListener('input', async e=>{ state.notes = e.target.value; await saveState(); });
+document.getElementById('resetDay').onclick=async()=>{ state.tasks.forEach(t=>t.done=false); await saveState(); renderTasks(); };
+document.getElementById('themeToggle').onclick=()=>{ const h=document.documentElement; h.setAttribute('data-theme', h.getAttribute('data-theme')==='dark'?'light':'dark'); };
+document.getElementById('goProgress').onclick=()=>{ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('progressView').classList.add('active'); renderProgress(); window.scrollTo(0,0); };
+document.getElementById('goTracker').onclick=()=>{ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('trackerView').classList.add('active'); window.scrollTo(0,0); };
+document.getElementById('clearHistoryBtn').onclick=async()=>{ if(confirm('Clear all progress history? This cannot be undone.')){ history={}; await saveHistory(history); renderProgress(); } };
+
+renderAll();
+</script>
+</body>
+</html>
